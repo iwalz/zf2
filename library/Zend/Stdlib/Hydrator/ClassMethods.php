@@ -10,7 +10,11 @@
 
 namespace Zend\Stdlib\Hydrator;
 
-use Zend\Stdlib\Exception;
+use Zend\Stdlib\Exception,
+    Zend\Stdlib\Hydrator\Filter\FilterComposite,
+    Zend\Stdlib\Hydrator\Filter\IsFilter,
+    Zend\Stdlib\Hydrator\Filter\GetFilter,
+    Zend\Stdlib\Hydrator\Filter\HasFilter;
 
 /**
  * @category   Zend
@@ -24,6 +28,11 @@ class ClassMethods extends AbstractHydrator
      * @var boolean
      */
     protected $underscoreSeparatedKeys;
+    /**
+     * Composite to validate the methods, that need to be hydrated
+     * @var Filter\FilterComposite
+     */
+    protected $filterComposite;
 
     /**
      * Define if extract values will use camel case or name with underscore
@@ -33,6 +42,11 @@ class ClassMethods extends AbstractHydrator
     {
         parent::__construct();
         $this->underscoreSeparatedKeys = $underscoreSeparatedKeys;
+
+        $this->filterComposite = new FilterComposite();
+        $this->filterComposite->addFilter("is", new IsFilter());
+        $this->filterComposite->addFilter("has", new HasFilter());
+        $this->filterComposite->addFilter("get", new GetFilter());
     }
 
     /**
@@ -60,7 +74,11 @@ class ClassMethods extends AbstractHydrator
         $methods = get_class_methods($object);
 
         foreach ($methods as $method) {
-            if (!preg_match('/^(get|has|is)[A-Z]\w*/', $method)) {
+            if (
+                !$this->filterComposite->filter(
+                    get_class($object) . '::' . $method
+                )
+            ) {
                 continue;
             }
 
@@ -114,5 +132,56 @@ class ClassMethods extends AbstractHydrator
             }
         }
         return $object;
+    }
+
+    /**
+     * Add a new validator to take care of what needs to be hydrated.
+     * To exclude e.g. the method getServiceLocator:
+     *
+     * <code>
+     * $composite->addValidator("servicelocator",
+     *     function($property) {
+     *         list($class, $method) = explode('::', $property);
+     *         if ($method === 'getServiceLocator') {
+     *             return false;
+     *         }
+     *         return true;
+     *     }, ValidatorComposite::CONDITION_AND
+     * );
+     * </code>
+     *
+     * @param string $name Index in the composite
+     * @param callable|Zend\Stdlib\Hydrator\Filter\FilterInterface $validator
+     * @param int $condition
+     */
+    public function addFilter($name, $validator, $condition = FilterComposite::CONDITION_OR)
+    {
+        $this->filterComposite->addFilter($name, $validator, $condition);
+    }
+
+    /**
+     * Check whether a specific validator exists at key $name or not
+     *
+     * @param string $name Index in the composite
+     * @return bool
+     */
+    public function hasFilter($name)
+    {
+        return $this->filterComposite->hasFilter($name);
+    }
+
+    /**
+     * Remove a validator from the composition.
+     * To not extract "has" methods, you simply need to unregister it
+     *
+     * <code>
+     * $filterComposite->removeValidator('has');
+     * </code>
+     *
+     * @param $name
+     */
+    public function removeFilter($name)
+    {
+        $this->filterComposite->removeFilter($name);
     }
 }
