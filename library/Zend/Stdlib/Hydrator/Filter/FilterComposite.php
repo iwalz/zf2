@@ -35,7 +35,7 @@ class FilterComposite implements FilterInterface
     const CONDITION_AND = 2;
 
     /**
-     * Define default validators
+     * Define default filter
      */
     public function __construct($orFilter = array(), $andFilter = array())
     {
@@ -55,12 +55,12 @@ class FilterComposite implements FilterInterface
      *             return false;
      *         }
      *         return true;
-     *     }, ValidatorComposite::CONDITION_AND
+     *     }, FilterComposite::CONDITION_AND
      * );
      * </code>
      *
-     * @param string $name
-     * @param callable|ValidationInterface $filter
+     * @param string $name The index where to add the filter
+     * @param callable|ValidationInterface $filter The filter that should be added
      * @param int $condition Can be either FilterComposite::CONDITION_OR or FilterComposite::CONDITION_AND
      */
     public function addFilter($name, $filter, $condition = self::CONDITION_OR)
@@ -107,7 +107,7 @@ class FilterComposite implements FilterInterface
     }
 
     /**
-     * Filter the composite based on the AND and OR condition
+     * Filter the composite based on the AND and OR condition.
      * Will return true if one from the "or conditions" and all from
      * the "and condition" returns true. Otherwise false
      *

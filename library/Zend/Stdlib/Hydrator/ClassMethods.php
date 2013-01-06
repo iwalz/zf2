@@ -29,7 +29,7 @@ class ClassMethods extends AbstractHydrator
      */
     protected $underscoreSeparatedKeys;
     /**
-     * Composite to validate the methods, that need to be hydrated
+     * Composite to filter the methods, that need to be hydrated
      * @var Filter\FilterComposite
      */
     protected $filterComposite;
@@ -135,18 +135,18 @@ class ClassMethods extends AbstractHydrator
     }
 
     /**
-     * Add a new validator to take care of what needs to be hydrated.
+     * Add a new filter to take care of what needs to be hydrated.
      * To exclude e.g. the method getServiceLocator:
      *
      * <code>
-     * $composite->addValidator("servicelocator",
+     * $composite->addFilter("servicelocator",
      *     function($property) {
      *         list($class, $method) = explode('::', $property);
      *         if ($method === 'getServiceLocator') {
      *             return false;
      *         }
      *         return true;
-     *     }, ValidatorComposite::CONDITION_AND
+     *     }, FilterComposite::CONDITION_AND
      * );
      * </code>
      *
@@ -160,7 +160,7 @@ class ClassMethods extends AbstractHydrator
     }
 
     /**
-     * Check whether a specific validator exists at key $name or not
+     * Check whether a specific filter exists at key $name or not
      *
      * @param string $name Index in the composite
      * @return bool
@@ -171,11 +171,11 @@ class ClassMethods extends AbstractHydrator
     }
 
     /**
-     * Remove a validator from the composition.
+     * Remove a filter from the composition.
      * To not extract "has" methods, you simply need to unregister it
      *
      * <code>
-     * $filterComposite->removeValidator('has');
+     * $filterComposite->removeFilter('has');
      * </code>
      *
      * @param $name
